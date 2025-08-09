@@ -2,6 +2,7 @@ export default {
   async fetch(req, env) {
     try {
       const url = new URL(req.url);
+
       // Expect URLs like /resume/Abhay_resume_2025.pdf
       if (!url.pathname.startsWith("/resume/")) {
         return new Response("Invalid path", { status: 400 });
@@ -40,10 +41,23 @@ export default {
         }
 
         const convertedPdf = await response.blob();
-        return new Response(convertedPdf, {
+
+        // Generate a random string for the new key
+        const randomString = Math.random().toString(36).substring(2, 8);
+        const newKey = `converted_${randomString}_${key}`;
+
+        // Save the converted PDF to R2 storage
+        await env.MY_BUCKET.put(newKey, convertedPdf, {
+          httpMetadata: {
+            contentType: "application/pdf"
+          }
+        });
+
+        // Redirect to the new path
+        return new Response(null, {
+          status: 302,
           headers: {
-            "Content-Type": "application/pdf",
-            "Content-Disposition": `inline; filename="converted_${key}"`
+            Location: `https://bythub.shop/resume/${newKey}`
           }
         });
       }
