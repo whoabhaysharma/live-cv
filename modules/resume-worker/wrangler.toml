@@ -1,0 +1,8 @@
+name = "resume-worker"
+main = "src/index.js"
+compatibility_date = "2025-08-09"
+
+[[r2_buckets]]
+binding = "MY_BUCKET"                # This will be env.MY_BUCKET
+bucket_name = "media"     # Your R2 bucket name
+preview_bucket_name = "media"
