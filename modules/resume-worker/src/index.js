@@ -2,7 +2,6 @@ export default {
   async fetch(req, env) {
     try {
       const url = new URL(req.url);
-
       // Expect URLs like /resume/Abhay_resume_2025.pdf
       if (!url.pathname.startsWith("/resume/")) {
         return new Response("Invalid path", { status: 400 });
@@ -21,7 +20,35 @@ export default {
         return new Response("File not found", { status: 404 });
       }
 
-      // Return the PDF
+      // Check for the `prompt` query parameter
+      const prompt = url.searchParams.get("prompt");
+      if (prompt) {
+        const apiUrl = "https://live-cv-byk0.onrender.com/convert";
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            pdfUrl: `https://media.bythub.shop/${key}`, // Replace with actual R2 storage URL
+            prompt: prompt
+          })
+        });
+
+        if (!response.ok) {
+          return new Response("Error converting file", { status: response.status });
+        }
+
+        const convertedPdf = await response.blob();
+        return new Response(convertedPdf, {
+          headers: {
+            "Content-Type": "application/pdf",
+            "Content-Disposition": `inline; filename="converted_${key}"`
+          }
+        });
+      }
+
+      // Return the original PDF
       return new Response(object.body, {
         headers: {
           "Content-Type": "application/pdf",
