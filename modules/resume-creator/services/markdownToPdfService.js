@@ -1,8 +1,8 @@
 // services/markdownToPdfService.js
-// Service to convert markdown string to PDF using Puppeteer
+// Service to convert markdown string to PDF using html-pdf-node
 
 const markdownIt = require('markdown-it');
-const puppeteer = require('puppeteer');
+const htmlPdfNode = require('html-pdf-node');
 
 const md = new markdownIt();
 
@@ -32,10 +32,9 @@ const defaultStyle = `
  * Converts a markdown string to a PDF file.
  * @param {string} markdown - The markdown content as a string.
  * @param {string} outputPath - The path to save the PDF file.
- * @param {string} [style] - Optional custom CSS style.
  * @returns {Promise<void>}
  */
-async function markdownToPdf(markdown, outputPath, style = defaultStyle) {
+async function markdownToPdf(markdown, outputPath) {
   const html = md.render(markdown);
   const fullHtml = `
     <!DOCTYPE html>
@@ -43,7 +42,7 @@ async function markdownToPdf(markdown, outputPath, style = defaultStyle) {
     <head>
       <meta charset="utf-8" />
       <title>Resume</title>
-      <style>${style}</style>
+      <style>${defaultStyle}</style>
     </head>
     <body>
       ${html}
@@ -51,16 +50,11 @@ async function markdownToPdf(markdown, outputPath, style = defaultStyle) {
     </html>
   `;
 
-  const browser = await puppeteer.launch();
-  const page = await browser.newPage();
-  await page.setContent(fullHtml, { waitUntil: 'networkidle0' });
-  await page.pdf({
-    path: outputPath,
-    format: 'A4',
-    printBackground: true,
-    margin: { top: '1cm', bottom: '1cm', left: '1cm', right: '1cm' }
-  });
-  await browser.close();
+  const file = { content: fullHtml };
+  const pdfBuffer = await htmlPdfNode.generatePdf(file, { format: 'A4' });
+
+  const fs = require('fs');
+  fs.writeFileSync(outputPath, pdfBuffer);
 }
 
 module.exports = { markdownToPdf };
